@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لعبة شجرة الكلمات والقرد</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            text-align: center;
+            background-color: #eef7f2;
+            margin: 0;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+        h1 { color: #2e7d32; }
+        .setup-screen {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            max-width: 400px;
+            margin: 20px auto;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        textarea {
+            width: 90%;
+            height: 120px;
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 8px;
+            border: 2px solid #a5d6a7;
+            margin-bottom: 15px;
+        }
+        button {
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 18px;
+            border-radius: 25px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: 0.2s;
+        }
+        button:hover { background-color: #388e3c; }
+        
+        .game-screen { display: none; position: relative; max-width: 500px; margin: auto; }
+        
+        /* تصميم الشجرة */
+        .tree-container {
+            position: relative;
+            width: 100%;
+            height: 320px;
+            margin-top: 10px;
+        }
+        .tree-bg {
+            font-size: 180px;
+            line-height: 1;
+            margin: 0;
+            filter: drop-shadow(0 5px 5px rgba(0,0,0,0.15));
+        }
+        
+        /* الفواكه */
+        .fruit {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: all 0.8s ease-in-out;
+            z-index: 10;
+        }
+        .fruit-icon {
+            font-size: 45px;
+            filter: drop-shadow(0 2px 3px rgba(0,0,0,0.2));
+        }
+        .fruit-text {
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            font-weight: bold;
+            font-size: 16px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            border: 1px solid #ffb74d;
+            margin-top: -5px;
+            white-space: nowrap;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        /* تأثير الاهتزاز عند الخطأ */
+        @keyframes shake {
+            0%, 100% { transform: scale(1.2) translateX(0); }
+            25% { transform: scale(1.2) translateX(-6px); }
+            75% { transform: scale(1.2) translateX(6px); }
+        }
+        .shake-fruit {
+            animation: shake 0.4s ease-in-out;
+        }
+        
+        /* القرد */
+        .bottom-container {
+            position: relative;
+            height: 150px;
+            margin-top: 20px;
+        }
+        .monkey {
+            font-size: 80px;
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            transition: transform 0.2s;
+        }
+        
+        .controls { 
+            margin-top: 25px; 
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+        .score { font-size: 20px; color: #2e7d32; font-weight: bold; margin-top: 10px; }
+        
+        /* سقوط الفاكهة */
+        .fall-to-monkey {
+            left: 50% !important;
+            top: 280px !important;
+            transform: translateX(-50%) scale(0.3) !important;
+            opacity: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>لعبة شجرة الكلمات والقرد 🌳🐒</h1>
+
+    <div id="setupScreen" class="setup-screen">
+        <h3>أدخلي الكلمات (كلمة في كل سطر):</h3>
+        <textarea id="wordsInput" placeholder="موز&#10;تفاح&#10;برتقال"></textarea>
+        <br>
+        <button onclick="startGame()">ابدأ اللعبة بقوة 🚀</button>
+    </div>
+
+    <div id="gameScreen" class="game-screen">
+        <div class="score">الفاكهة المتبقية: <span id="remainingCount">0</span></div>
+        
+        <div class="tree-container">
+            <div class="tree-bg">🌳</div>
+            <div id="treeFruits"></div>
+        </div>
+
+        <div class="bottom-container">
+            <div id="monkey" class="monkey">🐒</div>
+        </div>
+
+        <div class="controls">
+            <button id="wrongBtn" style="background-color: #f44336; font-size: 18px;" onclick="wrongAnswer()">❌ إجابة خاطئة</button>
+            <button id="eatBtn" style="background-color: #4caf50; font-size: 18px;" onclick="eatFruit()">✓ قراءة صحيحة! 🍏</button>
+        </div>
+    </div>
+
+    <script>
+        let words = [];
+        let currentFruitIndex = 0;
+        const fruitEmojis = ['🍎', '🍊', '🍓', '🍋', '🍏', '🍒'];
+        
+        const positions = [
+            {top: '40px', left: '40%'}, {top: '60px', left: '55%'},
+            {top: '90px', left: '25%'}, {top: '85px', left: '68%'},
+            {top: '130px', left: '35%'}, {top: '120px', left: '55%'},
+            {top: '140px', left: '18%'}, {top: '150px', left: '72%'},
+            {top: '180px', left: '46%'}, {top: '190px', left: '28%'}
+        ];
+
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playEatSound() {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(400, audioCtx.currentTime + 0.15);
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.15);
+        }
+
+        function playWrongSound() {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(180, audioCtx.currentTime);
+            osc.frequency.setValueAtTime(120, audioCtx.currentTime + 0.15);
+            gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.3);
+        }
+
+        function startGame() {
+            const input = document.getElementById('wordsInput').value.trim();
+            if(!input) {
+                alert('الرجاء إدخال كلمة واحدة على الأقل!');
+                return;
+            }
+            
+            words = input.split('\n').map(w => w.trim()).filter(w => w !== "");
+            currentFruitIndex = 0;
+            
+            document.getElementById('setupScreen').style.display = 'none';
+            document.getElementById('gameScreen').style.display = 'block';
+            
+            renderTree();
+        }
+
+        function renderTree() {
+            const container = document.getElementById('treeFruits');
+            container.innerHTML = '';
+            document.getElementById('remainingCount').innerText = words.length - currentFruitIndex;
+
+            words.forEach((word, index) => {
+                // فقط نعرض الفواكه التي لم تُؤكل بعد
+                if (index < currentFruitIndex) return;
+
+                const fruitDiv = document.createElement('div');
+                fruitDiv.className = 'fruit';
+                fruitDiv.id = `fruit-${index}`;
+                
+                const pos = positions[index % positions.length];
+                const emoji = fruitEmojis[index % fruitEmojis.length];
+                
+                fruitDiv.style.top = pos.top;
+                fruitDiv.style.left = pos.left;
+                
+                if (index !== currentFruitIndex) {
+                    fruitDiv.style.opacity = '0.4';
+                    fruitDiv.style.transform = 'scale(0.8)';
+                } else {
+                    fruitDiv.style.opacity = '1';
+                    fruitDiv.style.transform = 'scale(1.2)';
+                    fruitDiv.style.zIndex = '20';
+                }
+
+                fruitDiv.innerHTML = `
+                    <span class="fruit-icon">${emoji}</span>
+                    <span class="fruit-text">${word}</span>
+                `;
+                container.appendChild(fruitDiv);
+            });
+        }
+
+        function eatFruit() {
+            if (currentFruitIndex >= words.length) return;
+            
+            document.getElementById('eatBtn').disabled = true;
+            document.getElementById('wrongBtn').disabled = true;
+            
+            const currentFruit = document.getElementById(`fruit-${currentFruitIndex}`);
+            const monkey = document.getElementById('monkey');
+            
+            if (currentFruit) {
+                currentFruit.classList.add('fall-to-monkey');
+                monkey.innerHTML = '😮';
+                
+                setTimeout(() => {
+                    playEatSound();
+                    monkey.innerHTML = '😋';
+                    currentFruit.remove();
+                    
+                    currentFruitIndex++;
+                    
+                    document.getElementById('eatBtn').disabled = false;
+                    document.getElementById('wrongBtn').disabled = false;
+                    
+                    if (currentFruitIndex < words.length) {
+                        setTimeout(() => {
+                            monkey.innerHTML = '🐒';
+                            renderTree();
+                        }, 400);
+                    } else {
+                        setTimeout(() => {
+                            monkey.innerHTML = '👑🐒🎉';
+                            monkey.style.transform = 'translateX(-50%) scale(1.5)';
+                            alert('عاش البطل! القرد شبعان وسعيد جداً الآن! 🥳🍌');
+                        }, 500);
+                    }
+                }, 800);
+            }
+        }
+
+        function wrongAnswer() {
+            if (currentFruitIndex >= words.length) return;
+            
+            const monkey = document.getElementById('monkey');
+            const currentFruit = document.getElementById(`fruit-${currentFruitIndex}`);
+            
+            playWrongSound();
+            monkey.innerHTML = '😢'; // تغيير شكل القرد للحزن والدموع
+            
+            if (currentFruit) {
+                currentFruit.classList.add('shake-fruit'); // اهتزاز الفاكهة
+                setTimeout(() => {
+                    currentFruit.classList.remove('shake-fruit');
+                }, 400);
+            }
+            
+            // يعود القرد لطبيعته بعد ثانية ونصف ليحاول الطفل مرة أخرى
+            setTimeout(() => {
+                if (currentFruitIndex < words.length) {
+                    monkey.innerHTML = '🐒';
+                }
+            }, 1500);
+        }
+    </script>
+</body>
+</html>
