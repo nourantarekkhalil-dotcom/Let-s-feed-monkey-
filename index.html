@@ -46,7 +46,6 @@
         
         .game-screen { display: none; position: relative; max-width: 600px; margin: auto; }
         
-        /* شارات المستويات */
         .level-badge {
             background-color: #0288d1;
             color: white;
@@ -58,7 +57,6 @@
             font-weight: bold;
         }
         
-        /* تصميم الشجرة العملاقة */
         .tree-container {
             position: relative;
             width: 100%;
@@ -72,7 +70,6 @@
             filter: drop-shadow(0 8px 8px rgba(0,0,0,0.15));
         }
         
-        /* الفواكه والكلمات الكبيرة جداً */
         .fruit {
             position: absolute;
             display: flex;
@@ -89,7 +86,7 @@
             background: #ffffff;
             color: #000000;
             font-weight: bold;
-            font-size: 24px; /* تكبير خط الحركات */
+            font-size: 24px;
             padding: 4px 14px;
             border-radius: 12px;
             border: 2px solid #ff9800;
@@ -107,7 +104,6 @@
             animation: shake 0.4s ease-in-out;
         }
         
-        /* القرد */
         .bottom-container {
             position: relative;
             height: 140px;
@@ -180,7 +176,6 @@
         
         const fruitEmojis = ['🍎', '🍊', '🍓', '🍋', '🍏', '🍒'];
         
-        // مواضع منظمة للفواكه على جدار الشجرة لتظهر بشكل رائع وواضح
         const positions = [
             {top: '40px', left: '38%'}, {top: '70px', left: '55%'},
             {top: '110px', left: '18%'}, {top: '100px', left: '72%'},
@@ -219,22 +214,36 @@
             osc.stop(audioCtx.currentTime + 0.3);
         }
 
-        // نغمة تحفيز وتشجيعية عند الفوز بنهاية المستوى
+        // 🎵 مؤثر صوتي تحفيزي احترافي وحماسي جداً للنجاح وفوز الأطفال
         function playCheerSound() {
-            const notes = [261.63, 329.63, 392.00, 523.25]; // نغمات متصاعدة مفرحة
-            notes.forEach((freq, index) => {
+            const now = audioCtx.currentTime;
+            // نغمات سريعة متتالية ومتصاعدة تصنع لحن انتصار حقيقي
+            const notes = [
+                {f: 261.63, d: 0.1, t: 0},     // Do
+                {f: 329.63, d: 0.1, t: 0.08},  // Mi
+                {f: 392.00, d: 0.1, t: 0.16},  // Sol
+                {f: 523.25, d: 0.15, t: 0.24}, // Do العالية
+                {f: 392.00, d: 0.1, t: 0.36},  // Sol
+                {f: 523.25, d: 0.4, t: 0.44}   // Do العالية الكبرى الثابتة!
+            ];
+            
+            notes.forEach(note => {
                 setTimeout(() => {
                     const osc = audioCtx.createOscillator();
                     const gain = audioCtx.createGain();
+                    
                     osc.type = 'sine';
-                    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-                    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                    osc.frequency.setValueAtTime(note.f, audioCtx.currentTime);
+                    
+                    gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + note.d);
+                    
                     osc.connect(gain);
                     gain.connect(audioCtx.destination);
+                    
                     osc.start();
-                    osc.stop(audioCtx.currentTime + 0.3);
-                }, index * 120);
+                    osc.stop(audioCtx.currentTime + note.d);
+                }, note.t * 1000);
             });
         }
 
@@ -335,10 +344,9 @@
                             renderTree();
                         }, 400);
                     } else {
-                        // نهاية الكلمات في المستوى الحالي
                         if (currentLevel === 1) {
                             setTimeout(() => {
-                                playCheerSound(); // تشغيل صوت التحفيز
+                                playCheerSound(); // تفعيل الصوت الاحترافي الجديد
                                 monkey.innerHTML = '🎉🐒🥳';
                                 alert('رائع جداً! أنهيت المستوى الأول بنجاح! جاهز للمستوى الثاني؟ 💪🚀');
                                 currentLevel = 2;
@@ -346,9 +354,8 @@
                                 setupLevel();
                             }, 500);
                         } else {
-                            // نهاية اللعبة كاملة
                             setTimeout(() => {
-                                playCheerSound();
+                                playCheerSound(); // تفعيل الصوت الاحترافي الجديد عند الختام
                                 monkey.innerHTML = '👑🐒👑';
                                 monkey.style.transform = 'translateX(-50%) scale(1.6)';
                                 alert('ألف مبروك أيها البطل المتميز! لقد ختمت المستويين وشبع القرد تماماً! 🥳🏆🍌');
@@ -384,4 +391,3 @@
     </script>
 </body>
 </html>
-
