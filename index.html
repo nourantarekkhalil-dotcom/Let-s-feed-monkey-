@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لعبة شجرة الكلمات والقرد - مستويات</title>
+    <title>لعبة شجرة الكلمات والقرد - أصوات حقيقية</title>
     <style>
         body {
             font-family: 'Arial', sans-serif;
@@ -176,6 +176,15 @@
         
         const fruitEmojis = ['🍎', '🍊', '🍓', '🍋', '🍏', '🍒'];
         
+        // جلب ملفات صوتية حقيقية جاهزة ومرفوعة مسبقاً على الإنترنت للتشجيع والتصفيق
+        const eatSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2301/2301-84.wav');
+        const cheerSound = new Audio('https://assets.mixkit.co/active_storage/sfx/1433/1433-84.wav'); 
+        const wrongSound = new Audio('https://assets.mixkit.co/active_storage/sfx/950/950-84.wav');
+
+        // خفض حجم الصوت ليكون مناسباً لآذان الأطفال
+        cheerSound.volume = 0.6;
+        eatSound.volume = 0.5;
+
         const positions = [
             {top: '40px', left: '38%'}, {top: '70px', left: '55%'},
             {top: '110px', left: '18%'}, {top: '100px', left: '72%'},
@@ -183,69 +192,6 @@
             {top: '210px', left: '12%'}, {top: '220px', left: '74%'},
             {top: '260px', left: '44%'}, {top: '270px', left: '26%'}
         ];
-
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        
-        function playEatSound() {
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(150, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(400, audioCtx.currentTime + 0.15);
-            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.15);
-        }
-
-        function playWrongSound() {
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(180, audioCtx.currentTime);
-            osc.frequency.setValueAtTime(120, audioCtx.currentTime + 0.15);
-            gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.3);
-        }
-
-        // 🎵 مؤثر صوتي تحفيزي احترافي وحماسي جداً للنجاح وفوز الأطفال
-        function playCheerSound() {
-            const now = audioCtx.currentTime;
-            // نغمات سريعة متتالية ومتصاعدة تصنع لحن انتصار حقيقي
-            const notes = [
-                {f: 261.63, d: 0.1, t: 0},     // Do
-                {f: 329.63, d: 0.1, t: 0.08},  // Mi
-                {f: 392.00, d: 0.1, t: 0.16},  // Sol
-                {f: 523.25, d: 0.15, t: 0.24}, // Do العالية
-                {f: 392.00, d: 0.1, t: 0.36},  // Sol
-                {f: 523.25, d: 0.4, t: 0.44}   // Do العالية الكبرى الثابتة!
-            ];
-            
-            notes.forEach(note => {
-                setTimeout(() => {
-                    const osc = audioCtx.createOscillator();
-                    const gain = audioCtx.createGain();
-                    
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(note.f, audioCtx.currentTime);
-                    
-                    gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + note.d);
-                    
-                    osc.connect(gain);
-                    gain.connect(audioCtx.destination);
-                    
-                    osc.start();
-                    osc.stop(audioCtx.currentTime + note.d);
-                }, note.t * 1000);
-            });
-        }
 
         function startGame() {
             const l1Input = document.getElementById('level1Input').value.trim();
@@ -329,7 +275,7 @@
                 monkey.innerHTML = '😮';
                 
                 setTimeout(() => {
-                    playEatSound();
+                    eatSound.play().catch(e => console.log('Audio wait'));
                     monkey.innerHTML = '😋';
                     currentFruit.remove();
                     
@@ -346,19 +292,19 @@
                     } else {
                         if (currentLevel === 1) {
                             setTimeout(() => {
-                                playCheerSound(); // تفعيل الصوت الاحترافي الجديد
-                                monkey.innerHTML = '🎉🐒🥳';
-                                alert('رائع جداً! أنهيت المستوى الأول بنجاح! جاهز للمستوى الثاني؟ 💪🚀');
+                                cheerSound.play().catch(e => console.log('Audio wait'));
+                                monkey.innerHTML = '👏🎉🐒🥳';
+                                alert('👏 تصفيق حار! ياي أحسنتَ يا بطل! لقد أنهيت المستوى الأول بنجاح! جاهز للمستوى الثاني؟ 💪🚀');
                                 currentLevel = 2;
                                 monkey.innerHTML = '🐒';
                                 setupLevel();
                             }, 500);
                         } else {
                             setTimeout(() => {
-                                playCheerSound(); // تفعيل الصوت الاحترافي الجديد عند الختام
-                                monkey.innerHTML = '👑🐒👑';
+                                cheerSound.play().catch(e => console.log('Audio wait'));
+                                monkey.innerHTML = '👏👑🐒🏆';
                                 monkey.style.transform = 'translateX(-50%) scale(1.6)';
-                                alert('ألف مبروك أيها البطل المتميز! لقد ختمت المستويين وشبع القرد تماماً! 🥳🏆🍌');
+                                alert('👏 تصفيق وتشجيع كبير! هاي! ممتاز جداً! لقد ختمت كل المستويات بنجاح باهر! 🥳🏆👑');
                             }, 500);
                         }
                     }
@@ -372,7 +318,7 @@
             const monkey = document.getElementById('monkey');
             const currentFruit = document.getElementById(`fruit-${currentFruitIndex}`);
             
-            playWrongSound();
+            wrongSound.play().catch(e => console.log('Audio wait'));
             monkey.innerHTML = '😢';
             
             if (currentFruit) {
@@ -391,4 +337,3 @@
     </script>
 </body>
 </html>
-
